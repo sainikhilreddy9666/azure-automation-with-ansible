@@ -1,0 +1,40 @@
+# Terraform directories and files
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Terraform variable files (often contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Terraform plan output
+*.plan
+
+# Ansible directories and files
+*.retry
+inventory/
+hosts
+*.vault
+
+# Python virtual environments (if any)
+venv/
+.env/
+__pycache__/
+*.pyc
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
