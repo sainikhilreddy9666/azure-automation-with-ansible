@@ -1,0 +1,31 @@
+---
+- name: "Creating KeyVault"
+  hosts: "localhost"
+  connection: "local"
+  gather_facts: false
+
+  vars_files:
+    - ../vars/main_vars.yaml
+
+  tasks:
+    - name: "Creating Key Vault"
+      ansible.builtin.command:
+        cmd: >
+          az keyvault create
+          --name {{ keyvault_name }}
+          --resource-group {{ resource_group_name }}
+          --location {{ location }}
+          --enable-purge-protection true
+          --sku standard
+          --tags '{{ tags | to_json }}'
+      register: kv_result
+
+
+    - name: Display key vault details
+      ansible.builtin.debug:
+        msg:
+          - "Key Vault created"
+          - "resource group: {{ resource_group_name }}"
+          - "key vault: {{ keyvault_name }}"
+
+

@@ -1,0 +1,86 @@
+---
+- name: "Create Service Principal and store credentials in RBAC-enabled Key Vault"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../vars/main_vars.yaml
+
+  tasks:
+
+    - name: "Get current logged-in user's Object ID"
+      ansible.builtin.command: az ad signed-in-user show --query id -o tsv
+      register: current_user
+      changed_when: false
+
+    - name: "Grant Key Vault Administrator role to current user"
+      ansible.builtin.command: >
+        az role assignment create
+        --assignee {{ current_user.stdout }}
+        --role "Key Vault Administrator"
+        --scope /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group_name }}/providers/Microsoft.KeyVault/vaults/{{ keyvault_name }}
+      register: kv_admin_role
+      ignore_errors: true
+
+    - name: "Wait for RBAC role propagation"
+      ansible.builtin.pause:
+        seconds: 20
+
+    - name: "Create Service Principal with Contributor role"
+      ansible.builtin.command: >
+        az ad sp create-for-rbac
+        --name "sp-{{ resource_group_name }}"
+        --role Contributor
+        --scopes "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group_name }}"
+        --sdk-auth
+      register: sp_result
+      changed_when: "'appId' in sp_result.stdout"
+
+    - name: "Convert SP JSON output to Ansible facts"
+      ansible.builtin.set_fact:
+        sp_data: "{{ sp_result.stdout | from_json }}"
+
+    - name: "Assign Key Vault Secrets Officer role to SP"
+      ansible.builtin.command: >
+        az role assignment create
+        --assignee {{ sp_data.clientId }}
+        --role "Key Vault Secrets Officer"
+        --scope /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group_name }}/providers/Microsoft.KeyVault/vaults/{{ keyvault_name }}
+      register: role_assign_result
+      ignore_errors: true
+
+    - name: "Wait for RBAC role propagation (SP)"
+      ansible.builtin.pause:
+        seconds: 20
+
+    - name: "Store SP App ID in Key Vault"
+      ansible.builtin.command: >
+        az keyvault secret set
+        --vault-name {{ keyvault_name }}
+        --name "SP-APP-ID"
+        --value "{{ sp_data.clientId }}"
+      register: appid_result
+
+    - name: "Store SP Password in Key Vault"
+      ansible.builtin.command: >
+        az keyvault secret set
+        --vault-name {{ keyvault_name }}
+        --name "SP-PASSWORD"
+        --value "{{ sp_data.clientSecret }}"
+      register: pass_result
+
+    - name: "Store SP Tenant ID in Key Vault"
+      ansible.builtin.command: >
+        az keyvault secret set
+        --vault-name {{ keyvault_name }}
+        --name "SP-TENANT-ID"
+        --value "{{ sp_data.tenantId }}"
+      register: tenant_result
+
+    - name: "Show stored secrets info"
+      ansible.builtin.debug:
+        msg:
+          - "Service Principal Created: sp-{{ resource_group_name }}"
+          - "App ID, Password, and Tenant ID securely stored in Key Vault: {{ keyvault_name }}"
+

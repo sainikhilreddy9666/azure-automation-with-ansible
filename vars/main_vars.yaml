@@ -1,0 +1,24 @@
+resource_group_name:  "RG_power_mn"
+location: "westeurope"
+virtual_network_name: "Vnet_power_mn"
+subnet_name: "sub_power_mn"
+public_ip_name: "power_mn_public"
+network_interface_name: "NIC_power_mn"
+virtual_machine_name: "Vm_power_mn"
+virtual_machine_size: "Standard_B1s"
+admin_username: "powergrid_mannheim"
+admin_password: "powergrid_mannheim_new1"
+image: "ubuntuLTS"
+keyvault_name: "powermnkeyvault"
+tags:
+  project: "power_mn"
+  env: "dev"
+
+
+
+subscription_id: "e39b37b3-7eee-4b13-af90-b291bec6b7a3"
+azure_ad_client_id: "f98ab69e-28d9-4cd2-869f-ebeb59a71057"
+azure_ad_client_secret: "d3X8Q~TZh4A4TWn-nVk_kdbR7LVNIUAwV.FGNciu"
+azure_ad_tenant_id: "a41a6aad-84c6-4504-a415-73bc4c303188"
+azure_api_audience: "api://YOUR_API_APP_ID"
+

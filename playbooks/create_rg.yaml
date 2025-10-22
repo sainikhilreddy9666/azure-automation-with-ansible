@@ -1,0 +1,36 @@
+---
+- name: Create Azure Resource Group
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  collections:
+    - azure.azcollection
+
+  vars_files:
+    - ../vars/main_vars.yaml
+
+  vars:
+    ansible_python_interpreter: /home/saini/ansible-azure-infra/azure-ansible-env/bin/python3
+
+  tasks:
+    - name: Ensure Azure CLI is logged in
+      command: az account show
+      register: az_login
+      failed_when: az_login.rc != 0
+      changed_when: false
+
+    - name: Show current Azure account info
+      debug:
+        var: az_login.stdout
+
+    - name: Create resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group_name }}"
+        location: "{{ location }}"
+      register: rg_result
+
+    - name: Show resource group creation result
+      debug:
+        var: rg_result
+

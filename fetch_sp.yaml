@@ -1,0 +1,71 @@
+---
+- name: Fetch Service Principal secrets from Azure Key Vault
+  hosts: localhost
+  connection: local
+  vars:
+    keyvault_name: "powermnkeyvault"
+    sp_app_id_secret_name: "SP-APP-ID"
+    sp_password_secret_name: "SP-PASSWORD"
+    sp_tenant_id_secret_name: "SP-TENANT-ID"
+    sp_subscription_id_secret_name: "SP-SUBSCRIPTION-ID"
+
+  tasks:
+    - name: Fetch SP App ID
+      command: >
+        az keyvault secret show
+        --vault-name {{ keyvault_name }}
+        --name {{ sp_app_id_secret_name }}
+        --query value -o tsv
+      register: sp_app_id
+      changed_when: false
+
+    - name: Fetch SP Password
+      command: >
+        az keyvault secret show
+        --vault-name {{ keyvault_name }}
+        --name {{ sp_password_secret_name }}
+        --query value -o tsv
+      register: sp_password
+      changed_when: false
+
+    - name: Fetch Tenant ID
+      command: >
+        az keyvault secret show
+        --vault-name {{ keyvault_name }}
+        --name {{ sp_tenant_id_secret_name }}
+        --query value -o tsv
+      register: sp_tenant_id
+      changed_when: false
+
+    - name: Fetch Subscription ID
+      command: >
+        az keyvault secret show
+        --vault-name {{ keyvault_name }}
+        --name {{ sp_subscription_id_secret_name }}
+        --query value -o tsv
+      register: sp_subscription_id
+      changed_when: false
+
+    # For security, we don't print the actual values — just confirmation.
+    - name: Print success message (without showing secrets)
+      debug:
+        msg:
+          - " Successfully retrieved Service Principal credentials from Key Vault"
+          - " Secrets stored securely in Ansible variables"
+    - name: "Save SP credentials to a local file"
+      copy:
+        dest: "./vars/fetched_sp.yaml"
+        content: |
+          sp_app_id: "{{ sp_app_id.stdout }}"
+          sp_password: "{{ sp_password.stdout }}"
+          sp_tenant: "{{ sp_tenant_id.stdout }}"
+          sp_subscription: "{{ sp_subscription_id.stdout }}"
+
+    - name: "saving credentials for terraform"
+      copy:
+        dest: "./terraform/.env"
+        content: |
+          export ARM_CLIENT_ID="{{ sp_app_id.stdout }}"
+          export ARM_CLIENT_SECRET="{{ sp_password.stdout }}"
+          export ARM_TENANT_ID="{{ sp_tenant_id.stdout }}"
+          export ARM_SUBSCRIPTION_ID="{{ sp_subscription_id.stdout }}"

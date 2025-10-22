@@ -1,0 +1,10 @@
+---
+- name: Set Azure subscription context
+  hosts: localhost
+  connection: local
+  vars_files:
+    - vars/main_vars.yaml
+  tasks:
+    - name: Set Azure subscription using az CLI
+      command: az account set --subscription "{{ subscription_id }}"
+
